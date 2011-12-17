@@ -1,0 +1,14 @@
+==What is this?==
+Semantic OGPL is a module to expose metadata using semantic technologies. It is intended to work primarily with 
+the Open Government Platform (OGPL) although it may be possible to be extended to any Drupal installation in the future.
+
+==Installation==
+
+1) Copy the module in sites/all/modules
+
+2) In your browser, go to http://YOUROGLPINSTALLATION/admin/build/modules and enable "OGPL Semantic Metadata" module
+
+3) Go to http://YOUROGLPINSTALLATION/admin/build/block/list and enable the block called "Semantic Metadata" (you can put it anywhere you want)
+
+
+

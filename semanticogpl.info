@@ -1,0 +1,3 @@
+name = OGPL Semantic Metadata 
+description = Provides semantic representation of metadata for Datasets and Agencies for the Open Govenment Platform (OGPL).
+core = 6.x

@@ -1,0 +1,181 @@
+<?php
+/**
+* Display help and module information
+* @param path which path of the site we're displaying help
+* @param arg array that holds the current path as would be returned from arg() function
+* @return help text for the path
+*/
+
+
+function semanticogpl_block($op = 'list', $delta = 0) {  
+  $block = array();
+  
+  if ($op == "list") {
+    // Generate listing of blocks from this module, for the admin/block page
+    $block[0]["info"] = t('Semantic Metadata');
+  } 
+  else if ($op == 'view') {
+  	$node = node_load(arg(1));
+  	$block_content = '';
+  	if($node->type=="dataset"){
+  	  $block_content = _semanticogpl_expose_dataset($node);
+    }elseif($node->type =="agency"){
+      $block_content = _semanticogpl_expose_agency($node);
+    }
+    $block['content'] = $block_content;
+    
+  } // function semanticogpl_block
+  return $block;
+}
+
+function semanticogpl_help($path, $arg) {
+  global $base_url;
+  $output = '';  //declare your output variable
+  switch ($path) {
+  case "admin/help#semanticogpl":
+  	$output = '<p>'.  t("Displays links to nodes created on this date") .'</p>';
+  	break;
+  }
+  return $output;
+} // function semanticogpl_help
+
+function _semanticogpl_expose_agency($node){
+  global $base_url;
+  $block_content = '<div xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:foaf="http://xmlns.com/foaf/0.1/"
+  xmlns:frbr="http://purl.org/vocab/frbr/core#"
+  xmlns:dcat="http://www.w3.org/ns/dcat#"
+  xmlns:dgtwc="http://data-gov.tw.rpi.edu/2009/data-gov-twc.rdf#"
+  xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+  xmlns:dc="http://purl.org/dc/elements/1.1/" about="#agency">';
+  $name = $node->field_agency_name;
+  foreach($name as $v){
+  	$block_content .= '<span property="skos:prefLabel dc:title" content="'.$v['value'].'"></span>';
+  }
+  $shortname = $node->field_agency_short_name;
+  foreach($shortname as $v){
+  	$block_content .= '<span property="skos:altLabel dc:identifier" content="'.$v['value'].'"></span>';
+  }
+  $r = db_query('SELECT u.dst 
+  	FROM {content_type_dataset} AS c JOIN {url_alias} AS u ON u.src = CONCAT("node/", c.nid)
+  	WHERE c.field_ds_agency_name_nid =  %d', $node->nid);
+  
+  while (($next_record = db_fetch_array($r)) !== FALSE){
+  	$block_content .= '<span rev="dc:creator" resource="'.$base_url.'/'.$next_record['dst'].'#dataset" ></span>';
+  	$block_content .= '<span rev="dgtwc:agency" resource="'.$base_url.'/'.$next_record['dst'].'#dataset" ></span>';
+  }
+  
+  $block_content .= '</span>';
+  return $block_content; 
+}
+function _semanticogpl_expose_dataset($node){
+  global $base_url;
+  $block_content = '<div xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:foaf="http://xmlns.com/foaf/0.1/"
+  xmlns:frbr="http://purl.org/vocab/frbr/core#"
+  xmlns:dcat="http://www.w3.org/ns/dcat#"
+  xmlns:dgtwc="http://data-gov.tw.rpi.edu/2009/data-gov-twc.rdf#"
+  xmlns:pim="http://www.w3.org/2000/10/swap/pim/contact#"
+  xmlns:dc="http://purl.org/dc/elements/1.1/" about="#dataset">
+  
+  
+  <span property="dc:title" content="'.$node->title.'"></span>
+  <span rel="foaf:page" resource=""></span>
+  <span rel="rdf:type" resource="frbr:Work"></span>
+  ';
+  //Description
+  $desc = $node->field_ds_description;
+  foreach($desc as $v){
+  	$block_content .= '<span property="dc:description" content="'.htmlspecialchars($v['value']).'"></span>';
+  }
+  $uniqid = $node->field_ds_unique_id;
+  foreach($uniqid as $v){
+  	$block_content .= '<span property="dc:identifier" content="'.htmlspecialchars($v['value']).'"></span>';
+  }
+  /*$dl = $node->field_ds_access_method;
+  foreach($dl as $v){
+  if($v['value'] != "" && $v['value'] != NULL){
+  $block_content .= '<span property="dc:download_format" content="'.($v['value']).'"></span>';
+  }
+  }*/
+  $keywords = $node->field_ds_keywords;
+  foreach($keywords as $v){
+  	$kw = split(", ", $v['value']);
+  	foreach($kw as $w){
+  	  $block_content .= '<span property="dc:subject" content="'.htmlspecialchars($w).'"></span>';
+  	}
+  }
+  
+  $accessMethod = $node->field_ds_access_method;
+  foreach($accessMethod as $t){
+  	if($t['type']=='access_type_downloadable'){
+  	  $s = $t['value'];
+  	  if($s['field_atd_access_point'] != NULL){
+  	  	for($i=0; $i<count($s['field_atd_access_point']); $i++){      	  	  	
+  	  	  $block_content .= "\n\n\n\n\n".'<span rel="dcat:distribution" resource="'.$s['field_atd_access_point'][$i]['url'].'">';
+  	  	  $block_content .= '<span about="'.$s['field_atd_access_point'][$i]['url'].'"><span property="dgtwc:download_format" content="'.$s['field_atd_file_format'][$i]['value'].'"></span>';
+  	  	  $block_content .='</span></span>';            
+  	  	}      	  	
+  	  }
+  	}
+  }
+  
+  $accessUrl = $node->field_ds_access_url;
+  if(is_array($accessUrl)){
+  	foreach($accessUrl as $v){
+  	  if(is_array($v)){
+  	  	$block_content .= '<span rel="dcat:distribution" resource="'.$v['url'].'"></span>';            
+  	  }
+  	}
+  }
+  
+  $dateSubmitted = $node->field_ds_date_submitted;
+  foreach($dateSubmitted as $v){
+  	if($v['value'] != NULL){
+  	  $block_content .= '<span property="dc:dateSubmitted" content="'.htmlspecialchars($v['value']).'"></span>';
+  	}
+  }
+  $license = $node->field_ds_dataset_license_url;
+  foreach($license as $v){
+  	if($v['value'] != NULL){
+  	  $block_content .= '<span rel="dc:license" resource="'.$v['value'].'"></span>';
+  	}
+  }
+  $agency = $node->field_ds_agency_name;
+  foreach($agency as $v){
+  	$newNid = $v['nid'];
+  	if($newNid != "" && $newNid != NULL){
+  	  $auxNode = node_load($newNid);
+  	  $block_content .= '<span rel="dc:creator" resource="'.$base_url.'/'.$auxNode->path.'#agency" ></span>';
+  	  $block_content .= '<span rel="dgtwc:agency" resource="'.$base_url.'/'.$auxNode->path.'#agency" ></span>';
+  	}
+  	
+  }
+  $contact = $node->field_ds_contact_name;
+  for($i=0; $i<count($contact); $i++){
+  	$block_content .= '<span rel="dc:publisher"><span typeof="foaf:Person">';
+  	$name = $node->field_ds_contact_name;
+  	if($name != NULL && $name[$i]['value'] != NULL){
+  	  $block_content .= '  <span property="foaf:name" content="'.$name[$i]['value'].'"></span>'."\n";
+  	}
+  	$email = $node->field_ds_email_address;
+  	if($email != NULL && $email[$i]['email'] != NULL){
+  	  $block_content .= '  <span property="pim:emailAddress" content="'.$email[$i]['email'].'"></span>'."\n";
+  	}
+  	$address = $node->field_ds_office_address;
+  	if($address != NULL && $address[$i]['value'] != NULL){
+  	  $block_content .= '  <span property="pim:Address" content="'.$address[$i]['value'].'"></span>'."\n";
+  	}
+  	$block_content .= '</span></span>';
+  }
+  foreach($uniqid as $v){
+  	$block_content .= '<span property="dc:identifier" content="'.htmlspecialchars($v['value']).'"></span>';
+  }
+  $block_content .= '</div>';//.var_export($node, true); 
+  return $block_content;
+}
+
+function semanticogpl_perm(){
+  return array('access semanticogpl', 'administer semanticogpl');
+} // function semanticogpl_perm
+
