@@ -78,16 +78,96 @@ function _semanticogpl_expose_dataset($node){
 function _semanticogpl_expose_dataset_schemaorg($node){
   global $base_url;
   $block_content = '<div itemscope="itemscope" itemtype="http://schema.org/Dataset">';
+  //Name
+  $block_content .= '<span itemprop="name" title="itemprop=name" content="'.$node->title.'"></span>';
   //Description
   $desc = $node->field_ds_description;
   foreach($desc as $v){
-  	$block_content .= '<span itemprop="name" title="itemprop=name" content="'.htmlspecialchars($v['value']).'"></span>';
+  	$block_content .= '<span itemprop="description" title="itemprop=description" content="'.htmlspecialchars($v['value']).'"></span>';
   }
+  //Identifier missing
 /*  $uniqid = $node->field_ds_unique_id;
   foreach($uniqid as $v){
   	$block_content .= '<span property="dc:identifier" content="'.htmlspecialchars($v['value']).'"></span>';
   }*/
+  //Keywords
+  $keywords = $node->field_ds_keywords;
+  foreach($keywords as $v){
+  	$kw = split(", ", $v['value']);
+  	foreach($kw as $w){
+  	  $block_content .= '<span itemprop="keywords" content="'.htmlspecialchars($w).'"></span>';
+  	}
+  }
+  //Access method missing
+  /*$accessMethod = $node->field_ds_access_method;
+  foreach($accessMethod as $t){
+  	if($t['type']=='access_type_downloadable'){
+  	  $s = $t['value'];
+  	  if($s['field_atd_access_point'] != NULL){
+  	  	for($i=0; $i<count($s['field_atd_access_point']); $i++){      	  	  	
+  	  	  $block_content .= "\n\n\n\n\n".'<span rel="dcat:distribution" resource="'.$s['field_atd_access_point'][$i]['url'].'">';
+  	  	  $block_content .= '<span about="'.$s['field_atd_access_point'][$i]['url'].'"><span property="dgtwc:download_format" content="'.$s['field_atd_file_format'][$i]['value'].'"></span>';
+  	  	  $block_content .='</span></span>';            
+  	  	}      	  	
+  	  }
+  	}
+  }*/
+  //Access URL missing
+  /*$accessUrl = $node->field_ds_access_url;
+  if(is_array($accessUrl)){
+  	foreach($accessUrl as $v){
+  	  if(is_array($v)){
+  	  	$block_content .= '<span rel="dcat:distribution" resource="'.$v['url'].'"></span>';            
+  	  }
+  	}
+  }*/
+  //Date submitted
+  $dateSubmitted = $node->field_ds_date_submitted;
+  foreach($dateSubmitted as $v){
+  	if($v['value'] != NULL){
+  	  $block_content .= '<span itemprop="dateCreated" content="'.htmlspecialchars($v['value']).'"></span>';
+  	}
+  }
+  //Licence missing
+  /*$license = $node->field_ds_dataset_license_url;
+  foreach($license as $v){
+  	if($v['value'] != NULL){
+  	  $block_content .= '<span rel="dc:license" resource="'.$v['value'].'"></span>';
+  	}
+  }*/
+  //Agency or Organization
+  $agency = $node->field_ds_agency_name;
+  foreach($agency as $v){
+  	$newNid = $v['nid'];
+  	if($newNid != "" && $newNid != NULL){
+  	  $auxNode = node_load($newNid);
+  	  $block_content .= '<span itemprop="sourceOrganization" content="'.$base_url.'/'.$auxNode->path.'#agency" ></span>';
+  	}
+  	
+  }
+  //Creator
+  $contact = $node->field_ds_contact_name;
+  for($i=0; $i<count($contact); $i++){
+  	$block_content .= '<span itemprop="creator" itemscope itemtype="http://schema.org/Person" content="'.$name[$i]['value'].'">';
+  	/*$name = $node->field_ds_contact_name;
+  	if($name != NULL && $name[$i]['value'] != NULL){
+  	  $block_content .= '  <span property="foaf:name" content="'.$name[$i]['value'].'"></span>'."\n";
+  	}*/
+  	$email = $node->field_ds_email_address;
+  	if($email != NULL && $email[$i]['email'] != NULL){
+  	  $block_content .= '  <span itemprop="email" content="'.$email[$i]['email'].'"></span>'."\n";
+  	}
+  	$address = $node->field_ds_office_address;
+  	if($address != NULL && $address[$i]['value'] != NULL){
+  	  $block_content .= '  <span itemprop="address" content="'.$address[$i]['value'].'"></span>'."\n";
+  	}
+  	$block_content .= '</span>';
+  }
+  /*foreach($uniqid as $v){
+  	$block_content .= '<span property="dc:identifier" content="'.htmlspecialchars($v['value']).'"></span>';
+  }*/
 
+  
   $block_content .= '</div>';
   return $block_content;
 }
