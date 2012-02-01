@@ -69,6 +69,30 @@ function _semanticogpl_expose_agency($node){
   return $block_content; 
 }
 function _semanticogpl_expose_dataset($node){
+  if(variable_get('semanticogpl_syntax', 'rdfa') == 'rdfa'){
+  	return _semanticogpl_expose_dataset_rdfa($node);
+  }else{
+  	return _semanticogpl_expose_dataset_schemaorg($node);
+  }
+}
+function _semanticogpl_expose_dataset_schemaorg($node){
+  global $base_url;
+  $block_content = '<div itemscope="itemscope" itemtype="http://schema.org/Dataset">';
+  //Description
+  $desc = $node->field_ds_description;
+  foreach($desc as $v){
+  	$block_content .= '<span itemprop="name" title="itemprop=name" content="'.htmlspecialchars($v['value']).'"></span>';
+  }
+/*  $uniqid = $node->field_ds_unique_id;
+  foreach($uniqid as $v){
+  	$block_content .= '<span property="dc:identifier" content="'.htmlspecialchars($v['value']).'"></span>';
+  }*/
+
+  $block_content .= '</div>';
+  return $block_content;
+}
+
+function _semanticogpl_expose_dataset_rdfa($node){
   global $base_url;
   $block_content = '<div xmlns="http://www.w3.org/1999/xhtml"
   xmlns:foaf="http://xmlns.com/foaf/0.1/"
