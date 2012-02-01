@@ -69,7 +69,7 @@ function _semanticogpl_expose_agency($node){
   return $block_content; 
 }
 function _semanticogpl_expose_dataset($node){
-  if(variable_get('semanticogpl_syntax', 'rdfa') == 'rdfa'){
+  if(variable_get('semanticogpl_syntax', 'schemaorg') == 'rdfa'){
   	return _semanticogpl_expose_dataset_rdfa($node);
   }else{
   	return _semanticogpl_expose_dataset_schemaorg($node);
