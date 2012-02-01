@@ -6,6 +6,41 @@
 * @return help text for the path
 */
 
+function semanticogpl_menu() {
+  $items['admin/settings/semanticogpl'] = array(
+    'title' => 'Semantic OGPL Configuration',
+    'description' => 'Change the settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('semanticogpl_admin_form'),
+    'access arguments' => array('administer semanticogpl'),
+  );
+  $items['view-settings'] = array(
+    'title' => 'View Configured Settings',
+    'page callback' => 'semanticogpl_view_conf',
+    'access arguments' => array('administer semanticogpl'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+function semanticogpl_view_conf() {
+  $output = '';
+  $output .= 'Syntax selection: ' . 
+                variable_get('semanticogpl_syntax', 'rdfa');
+  return $output;
+}
+
+function semanticogpl_admin_form() {
+  $form['semanticogpl_syntax'] = array(
+    '#type' => 'radios',
+    '#title' => t('Syntax to be used'),
+    '#default_value' => variable_get('semanticogpl_syntax', 'schemaorg'),
+    '#options' => array('rdfa' => t('RDFa'), 'schemaorg' => t('Schema.org')),
+    '#description' => t('Choose how SemanticOGPL should expose your metadata (RDFa or Schema.org)'),    
+  );
+  return system_settings_form($form);
+}
+
 
 function semanticogpl_block($op = 'list', $delta = 0) {  
   $block = array();
@@ -75,6 +110,8 @@ function _semanticogpl_expose_dataset($node){
   	return _semanticogpl_expose_dataset_schemaorg($node);
   }
 }
+
+
 function _semanticogpl_expose_dataset_schemaorg($node){
   global $base_url;
   $block_content = '<div itemscope="itemscope" itemtype="http://schema.org/Dataset">';
